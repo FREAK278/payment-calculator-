@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#153e35">
+  <meta name="description" content="Offline payment calculator for OP Foods and Patra Foods">
+  <link rel="manifest" href="manifest.json">
+  <title>Payment Calculator</title>
+  <style>
+    :root { --green:#153e35; --green2:#1d6655; --bg:#f3f6f5; --card:#fff; --text:#182522; --muted:#61716c; --line:#dce5e1; --red:#a52c2c; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+    header { background:var(--green); color:white; padding:20px 16px 18px; }
+    header h1 { font-size:22px; margin:0 0 5px; }
+    header p { margin:0; opacity:.85; font-size:13px; }
+    main { max-width:720px; margin:auto; padding:14px; }
+    .status { font-size:12px; color:var(--muted); margin:0 2px 12px; }
+    .tabs { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-bottom:12px; }
+    .tab { border:1px solid var(--line); border-radius:11px; padding:11px 6px; background:#fff; color:var(--green); font-weight:700; }
+    .tab.active { background:var(--green); color:#fff; border-color:var(--green); }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; margin-bottom:13px; box-shadow:0 2px 8px #102b2010; }
+    h2 { margin:0 0 14px; font-size:18px; }
+    label { display:block; font-size:13px; font-weight:650; margin:12px 0 6px; }
+    input, select { width:100%; padding:13px 12px; border:1px solid #cbd8d2; border-radius:10px; background:#fff; font:inherit; font-size:16px; color:var(--text); }
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    button { border:0; border-radius:11px; padding:13px 14px; font:inherit; font-weight:750; cursor:pointer; }
+    button.primary { background:var(--green2); color:white; width:100%; margin-top:15px; }
+    button.secondary { background:#e7efeb; color:var(--green); }
+    button.danger { background:#fff0f0; color:var(--red); }
+    button:disabled { opacity:.5; }
+    .result { background:#edf6f1; border:1px solid #cce2d6; border-radius:13px; padding:13px; margin-top:14px; }
+    .result .big { font-size:27px; font-weight:850; color:var(--green); }
+    .result-row { display:flex; justify-content:space-between; gap:12px; padding:6px 0; font-size:14px; }
+    .result-row span:first-child { color:var(--muted); }
+    .hidden { display:none !important; }
+    .small { font-size:12px; color:var(--muted); line-height:1.45; }
+    .entry { border:1px solid var(--line); border-radius:12px; padding:12px; margin:9px 0; background:#fff; }
+    .entry-top { display:flex; justify-content:space-between; gap:10px; }
+    .entry strong { display:block; }
+    .pill { display:inline-block; background:#e8f1ed; color:var(--green); border-radius:20px; padding:3px 8px; font-size:11px; font-weight:800; margin-top:5px; }
+    .entry-actions { display:flex; gap:8px; margin-top:10px; }
+    .entry-actions button { flex:1; padding:9px; font-size:13px; }
+    .totals { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+    .totalbox { background:#f5f8f6; border-radius:11px; padding:12px; }
+    .totalbox .num { font-size:19px; font-weight:800; margin-top:5px; }
+    .notice { background:#fff8df; border:1px solid #f0df9f; padding:11px; border-radius:10px; font-size:12px; line-height:1.45; }
+    .empty { text-align:center; padding:25px 8px; color:var(--muted); }
+    @media print {
+      body * { visibility:hidden !important; }
+      #printArea, #printArea * { visibility:visible !important; }
+      #printArea { display:block !important; position:absolute; left:0; top:0; width:72mm; padding:2mm; color:#000; font:12px monospace; }
+      #printArea h3 { text-align:center; margin:3px 0; }
+      #printArea .center { text-align:center; }
+      #printArea .line { border-top:1px dashed #000; margin:6px 0; }
+      #printArea .p-row { display:flex; justify-content:space-between; gap:6px; }
+      @page { margin:0; size:80mm auto; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Payment Calculator</h1>
+  <p>OP Foods · Patra Foods · Offline-ready</p>
+</header>
+<main>
+  <p class="status" id="networkStatus">Checking connection…</p>
+  <nav class="tabs">
+    <button class="tab active" data-tab="new">New Payment</button>
+    <button class="tab" data-tab="history">History</button>
+    <button class="tab" data-tab="reports">Reports & Backup</button>
+  </nav>
+
+  <section id="newView">
+    <div class="card">
+      <h2>New payment</h2>
+      <label for="company">Select company (required every time)</label>
+      <select id="company">
+        <option value="OP Foods">1 — OP Foods</option>
+        <option value="Patra Foods">2 — Patra Foods</option>
+      </select>
+      <label for="customer">Customer name</label>
+      <input id="customer" autocomplete="name" placeholder="Enter customer name" maxlength="100">
+      <div class="grid2">
+        <div><label for="weight">Actual weight (quintals)</label><input id="weight" type="number" inputmode="decimal" min="0.001" step="0.001" placeholder="e.g. 100"></div>
+        <div><label for="price">Price per quintal (₹)</label><input id="price" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="e.g. 2000"></div>
+      </div>
+      <button class="primary" id="calculateBtn">Calculate payment</button>
+      <div id="calculation" class="result hidden"></div>
+      <button class="primary hidden" id="saveBtn">Save transaction & create receipt</button>
+      <p class="small">Calculation rules: 3.5 kg deduction per actual quintal, ₹25 labour per actual quintal, then 1% deduction from the amount remaining after labour.</p>
+    </div>
+  </section>
+
+  <section id="historyView" class="hidden">
+    <div class="card">
+      <h2>Transaction history</h2>
+      <label for="filterCompany">Filter company</label>
+      <select id="filterCompany"><option value="All">All companies</option><option>OP Foods</option><option>Patra Foods</option></select>
+      <label for="searchText">Search customer or receipt number</label>
+      <input id="searchText" placeholder="Type to search">
+      <div id="historyList"></div>
+    </div>
+  </section>
+
+  <section id="reportsView" class="hidden">
+    <div class="card">
+      <h2>Reports</h2>
+      <div id="reportTotals" class="totals"></div>
+    </div>
+    <div class="card">
+      <h2>Backup and restore</h2>
+      <p class="small">Export a CSV backup regularly and keep a copy outside your phone. CSV can be opened in Excel. Import a backup to restore transactions on this phone.</p>
+      <button class="primary" id="exportBtn">Export all transactions to CSV</button>
+      <label for="importFile">Restore transactions from CSV backup</label>
+      <input id="importFile" type="file" accept=".csv,text/csv">
+      <p class="small">Import adds records to this phone. Existing receipt numbers are skipped to avoid duplicate imports.</p>
+      <div class="notice">Your transactions are saved in this browser on this phone. Clearing Chrome site data or uninstalling/resetting the browser can delete them. Export backups often. This starter version does not automatically sync to another device or cloud.</div>
+    </div>
+  </section>
+
+  <div id="printArea" class="hidden"></div>
+  <p class="small">Starter version · Stored locally on this device · Use a secure HTTPS host to install and use offline.</p>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
